@@ -13,8 +13,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -60,6 +62,14 @@ class MainActivity : AppCompatActivity() {
     private val TEMPO_INATIVIDADE_MS = 45_000L
     private val voltarParaEsperaRunnable = Runnable { mostrarTelaEspera() }
 
+    // Credenciais do Supabase do projeto Levo Conveniência, já embutidas no app.
+    // Isso é seguro porque a chave abaixo é do tipo "anon public"/"publishable" —
+    // feita para ser exposta em clientes, protegida pelas regras de acesso das
+    // tabelas (Row Level Security), não por sigilo. Assim, quem instalar o app
+    // pela loja do PagBank não precisa configurar nada — já funciona sozinho.
+    private val SUPABASE_URL_EMBUTIDO = "https://eeqkhlxplkswqpwvqpji.supabase.co"
+    private val SUPABASE_KEY_EMBUTIDA = "sb_publishable_nrgrl4nLkMoOX97th4QMiw_HsLAEqjA"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = getSharedPreferences("levo_maquininha_prefs", Context.MODE_PRIVATE)
@@ -94,13 +104,14 @@ class MainActivity : AppCompatActivity() {
     // ==================== CONFIGURAÇÃO (Supabase + PagBank) ====================
 
     private fun configurarSupabase() {
-        val url = prefs.getString("supabase_url", null)
-        val key = prefs.getString("supabase_key", null)
-        if (url.isNullOrBlank() || key.isNullOrBlank()) {
-            supabaseApi = null
-        } else {
-            supabaseApi = SupabaseApi(url.trimEnd('/'), key)
-        }
+        // Sempre conecta com as credenciais embutidas — nenhuma configuração
+        // manual é necessária. O campo abaixo existe só para o caso raro de
+        // precisar apontar para outro projeto Supabase durante testes internos.
+        val urlPersonalizada = prefs.getString("supabase_url_override", null)
+        val keyPersonalizada = prefs.getString("supabase_key_override", null)
+        val url = if (!urlPersonalizada.isNullOrBlank()) urlPersonalizada else SUPABASE_URL_EMBUTIDO
+        val key = if (!keyPersonalizada.isNullOrBlank()) keyPersonalizada else SUPABASE_KEY_EMBUTIDA
+        supabaseApi = SupabaseApi(url.trimEnd('/'), key)
     }
 
     private fun ativarTerminalSeNecessario() {
@@ -136,18 +147,22 @@ class MainActivity : AppCompatActivity() {
             return e
         }
 
-        val campoUrl = campo("URL do projeto Supabase (https://xxx.supabase.co)", prefs.getString("supabase_url", ""))
-        val campoKey = campo("Chave anon public do Supabase", prefs.getString("supabase_key", ""))
         val campoAtivacao = campo("Código de ativação do terminal (PagBank)", prefs.getString("codigo_ativacao", ""))
+
+        val checkModoTeste = CheckBox(this).apply {
+            text = "Modo de teste (simular pagamentos, sem terminal real)"
+            isChecked = prefs.getBoolean("modo_teste", false)
+            setPadding(0, 20, 0, 0)
+        }
+        layout.addView(checkModoTeste)
 
         AlertDialog.Builder(this)
             .setTitle("Configurações da maquininha")
             .setView(layout)
             .setPositiveButton("Salvar e reiniciar") { _, _ ->
                 prefs.edit()
-                    .putString("supabase_url", campoUrl.text.toString().trim())
-                    .putString("supabase_key", campoKey.text.toString().trim())
                     .putString("codigo_ativacao", campoAtivacao.text.toString().trim())
+                    .putBoolean("modo_teste", checkModoTeste.isChecked)
                     .apply()
                 recreate()
             }
@@ -167,15 +182,14 @@ class MainActivity : AppCompatActivity() {
 
         val cartaoLogo = LinearLayout(this).apply {
             setBackgroundColor(Color.WHITE)
-            setPadding(70, 60, 70, 60)
+            setPadding(60, 50, 60, 50)
         }
-        val txtLogo = TextView(this).apply {
-            text = "Levo Conveniência"
-            textSize = 26f
-            setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.parseColor("#2FAFC4"))
+        val imgLogo = ImageView(this).apply {
+            setImageResource(R.drawable.logo_levo)
+            adjustViewBounds = true
+            layoutParams = LinearLayout.LayoutParams(600, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
-        cartaoLogo.addView(txtLogo)
+        cartaoLogo.addView(imgLogo)
         telaEspera.addView(cartaoLogo)
 
         val txtToque = TextView(this).apply {
@@ -206,6 +220,19 @@ class MainActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             visibility = View.GONE
+        }
+
+        if (prefs.getBoolean("modo_teste", false)) {
+            val faixaTeste = TextView(this).apply {
+                text = "⚠️ MODO TESTE — pagamentos são simulados, sem terminal real"
+                textSize = 12f
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(Color.WHITE)
+                setBackgroundColor(Color.parseColor("#E08A00"))
+                gravity = Gravity.CENTER
+                setPadding(0, 12, 0, 12)
+            }
+            telaCatalogo.addView(faixaTeste)
         }
 
         val cabecalho = TextView(this).apply {
@@ -239,7 +266,7 @@ class MainActivity : AppCompatActivity() {
     private fun carregarProdutos() {
         val api = supabaseApi
         if (api == null) {
-            mostrarMensagemCatalogo("Supabase não configurado. Toque e segure a tela de espera para configurar.")
+            mostrarMensagemCatalogo("Erro interno de configuração. Tente reiniciar o app.")
             return
         }
         mostrarMensagemCatalogo("Carregando produtos…")
@@ -386,6 +413,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executarPagamento(produto: Produto, qtd: Int, total: Double, tipo: Int) {
+        val modoTesteFixo = prefs.getBoolean("modo_teste", false)
+        if (modoTesteFixo) {
+            simularPagamento(produto, qtd, total)
+            return
+        }
+
         Toast.makeText(this, "Siga as instruções no terminal…", Toast.LENGTH_SHORT).show()
         Thread {
             try {
@@ -406,12 +439,38 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
+                // Isso normalmente acontece quando o app roda fora de um terminal PagBank
+                // de verdade (ex: testando num celular comum ou emulador) — o serviço do
+                // PlugPag não existe nesses aparelhos. Em vez de só mostrar erro, oferece
+                // simular a aprovação, para dar pra testar o resto do app (catálogo,
+                // Supabase, telas) sem precisar do terminal físico.
                 runOnUiThread {
-                    Toast.makeText(this, "Erro no terminal: ${e.message}", Toast.LENGTH_LONG).show()
-                    reiniciarTimerInatividade()
+                    oferecerModoTeste(produto, qtd, total, e.message ?: "desconhecido")
                 }
             }
         }.start()
+    }
+
+    /** Chamado quando o SDK PlugPag falha — provavelmente por não haver terminal real conectado. */
+    private fun oferecerModoTeste(produto: Produto, qtd: Int, total: Double, motivoErro: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Terminal PagBank não encontrado")
+            .setMessage("Não foi possível falar com um terminal real (erro: $motivoErro).\n\nIsso é esperado se você estiver testando fora da maquininha Smart. Quer simular a aprovação deste pagamento, só para testar o app?")
+            .setPositiveButton("Simular esta venda") { _, _ ->
+                simularPagamento(produto, qtd, total)
+            }
+            .setNeutralButton("Sempre simular neste aparelho") { _, _ ->
+                prefs.edit().putBoolean("modo_teste", true).apply()
+                simularPagamento(produto, qtd, total)
+            }
+            .setNegativeButton("Cancelar") { _, _ -> reiniciarTimerInatividade() }
+            .show()
+    }
+
+    /** Simula uma aprovação instantânea, sem falar com o terminal — só para testes. */
+    private fun simularPagamento(produto: Produto, qtd: Int, total: Double) {
+        Toast.makeText(this, "⚠️ MODO TESTE — pagamento simulado, não é dinheiro de verdade", Toast.LENGTH_LONG).show()
+        finalizarVendaAprovada(produto, qtd, total)
     }
 
     /** Pagamento aprovado: dá baixa no estoque e registra a venda no Supabase. */
@@ -422,7 +481,7 @@ class MainActivity : AppCompatActivity() {
         mostrarTelaSucesso(produto, qtd, total)
 
         if (api == null) {
-            Toast.makeText(this, "Venda aprovada, mas Supabase não configurado — estoque não foi atualizado.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Venda aprovada, mas houve um erro interno — estoque não foi atualizado.", Toast.LENGTH_LONG).show()
             return
         }
         api.atualizarEstoque(produto.id, novaQtd) { ok, erro ->

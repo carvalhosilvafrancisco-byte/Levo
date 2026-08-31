@@ -1,0 +1,70 @@
+flowchart TD
+
+  subgraph CLIENTE["📱 App do Cliente (celular do comprador)"]
+    A1["Cadastro único:<br/>nome, dados + foto do rosto<br/>(aceite LGPD)"]
+    A2["Sessão fica salva<br/>no aparelho<br/>(não pede login de novo)"]
+    A3["Consulta: catálogo,<br/>histórico de compras,<br/>dados do perfil"]
+    A1 --> A2 --> A3
+  end
+
+  A1 -.->|"foto serve para 'ensinar'<br/>o rosto ao leitor físico"| B0
+
+  subgraph PORTA["🚪 Porta da geladeira (hardware separado)"]
+    B0["Leitor facial<br/>Intelbras ou Control iD/iDFace"]
+    B1["Reconhece o rosto<br/>ao vivo, na porta"]
+    B2["Destrava a porta"]
+    B0 --> B1 --> B2
+  end
+
+  B2 --> C0["Cliente retira<br/>o produto da geladeira"]
+  C0 --> D1
+
+  subgraph MAQUININHA["💳 Maquininha Smart (app Android nativo, sem WebView)"]
+    D1["Tela de espera:<br/>'Toque aqui para iniciar'"]
+    D2["Catálogo carregado<br/>direto do Supabase"]
+    D3["Cliente seleciona<br/>produto + quantidade"]
+    D4["Escolhe forma de<br/>pagamento (crédito/débito/Pix)"]
+    D5["SDK PlugPag aciona<br/>a cobrança no terminal"]
+    D6{"Pagamento<br/>aprovado?"}
+    D7["Dá baixa no estoque +<br/>registra a venda"]
+    D8["Mostra sucesso e volta<br/>sozinho para a espera"]
+
+    D1 --> D2 --> D3 --> D4 --> D5 --> D6
+    D6 -->|"sim"| D7 --> D8
+    D6 -->|"não"| D1
+  end
+
+  subgraph BACKEND["☁️ Supabase (banco de dados central, tempo real)"]
+    E1[("tabela: usuarios")]
+    E2[("tabela: produtos")]
+    E3[("tabela: consumos")]
+  end
+
+  D2 <-->|"lê produtos/estoque"| E2
+  D7 -->|"insere venda"| E3
+  D7 -->|"atualiza quantidade"| E2
+  A1 -->|"salva cadastro"| E1
+  A3 -->|"lê dados do cliente"| E1
+  A3 -->|"lê produtos"| E2
+  A3 -->|"lê histórico"| E3
+
+  subgraph ADMIN["🖥️ Painel Admin (mesmo app web, área restrita por senha)"]
+    F1["Dashboard:<br/>faturamento, ticket médio,<br/>produtos mais vendidos"]
+    F2["Estoque:<br/>cadastrar/editar produtos,<br/>ajustar quantidade"]
+    F3["Usuários:<br/>ver dados, bloquear,<br/>lista negra"]
+    F4["Histórico:<br/>todas as vendas de<br/>todos os clientes"]
+    F5["Integrações:<br/>configurar Supabase,<br/>leitor facial, PlugPag"]
+  end
+
+  E2 <-->|"tempo real"| F1
+  E3 <-->|"tempo real"| F1
+  E2 <-->|"tempo real"| F2
+  E1 <-->|"tempo real"| F3
+  E3 <-->|"tempo real"| F4
+
+  %% Legenda de status
+  classDef pronto fill:#D1F5E0,stroke:#3FA66E,stroke-width:2px,color:#0B1E2D;
+  classDef pendente fill:#FFE9CC,stroke:#E08A00,stroke-width:2px,color:#0B1E2D;
+
+  class A1,A2,A3,C0,D1,D2,D3,D4,D5,D6,D7,D8,E1,E2,E3,F1,F2,F3,F4,F5 pronto;
+  class B0,B1,B2 pendente;

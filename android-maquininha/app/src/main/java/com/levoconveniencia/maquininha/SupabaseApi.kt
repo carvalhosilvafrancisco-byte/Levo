@@ -31,24 +31,31 @@ class SupabaseApi(private val baseUrl: String, private val anonKey: String) {
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
     private fun headers(builder: Request.Builder): Request.Builder {
-        return builder
-            .addHeader("apikey", anonKey)
-            .addHeader("Authorization", "Bearer $anonKey")
+        // Só o header "apikey" é necessário (é assim que o teste direto no
+        // navegador funcionou). O header "Authorization: Bearer" espera um
+        // JWT tradicional — a chave nova "sb_publishable_..." não é um JWT,
+        // e mandar ela nesse header pode fazer o Supabase tratar a requisição
+        // com um papel/role diferente do esperado, retornando uma lista vazia
+        // em vez de erro (por causa das regras de segurança das tabelas).
+        return builder.addHeader("apikey", anonKey)
     }
 
     /** Busca todos os produtos, ordenados por nome. */
     fun listarProdutos(callback: (lista: List<Produto>?, erro: String?) -> Unit) {
-        val req = headers(
-            Request.Builder().url("$baseUrl/rest/v1/produtos?select=*&order=nome.asc")
-        ).get().build()
+        val url = "$baseUrl/rest/v1/produtos?select=*&order=nome.asc"
+        val req = headers(Request.Builder().url(url)).get().build()
 
         client.newCall(req).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                callback(null, e.message ?: "Falha de conexão")
+                callback(null, "${e.javaClass.simpleName}: ${e.message} (URL: $url)")
             }
             override fun onResponse(call: Call, response: Response) {
                 response.use { r ->
-                    if (!r.isSuccessful) { callback(null, "Erro HTTP ${r.code}"); return }
+                    if (!r.isSuccessful) {
+                        val corpo = try { r.body?.string()?.take(200) } catch (e: Exception) { null }
+                        callback(null, "Erro HTTP ${r.code} em $url — resposta: $corpo")
+                        return
+                    }
                     try {
                         val arr = JSONArray(r.body?.string() ?: "[]")
                         val lista = mutableListOf<Produto>()

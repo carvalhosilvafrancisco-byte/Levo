@@ -50,13 +50,15 @@ android-maquininha/
 4. Se aprovado: dá baixa no estoque (`SupabaseApi.atualizarEstoque`) e registra a venda (`SupabaseApi.registrarVenda`) nas mesmas tabelas que o app web já usa — a venda aparece automaticamente no Histórico e no Dashboard do painel admin, exatamente como as vendas feitas pela simulação no navegador.
 5. Mostra uma tela de sucesso por alguns segundos e volta sozinho para a tela de espera — pronta para o próximo cliente. O mesmo acontece se ninguém tocar em nada por 45 segundos.
 
-## 4. Como configurar antes de compilar
+## 4. Configuração — já embutida, zero configuração para quem instalar
 
-Não é necessário editar nenhuma URL no código desta vez — a configuração é feita **dentro do próprio app**, depois de instalado: toque e segure a tela de espera por ~3 segundos para abrir a tela de configurações, com três campos:
+A URL e a chave do Supabase já estão **embutidas diretamente no código** (`MainActivity.kt`), então quem instalar o app (seja no terminal DEBUG, seja depois de publicado na loja do PagBank) não precisa configurar nada — abre e já funciona sozinho. Isso é importante porque, no modelo de distribuição real (loja interna do PagBank), ninguém vai digitar credenciais na hora de instalar.
 
-- **URL do projeto Supabase** (ex: `https://xxxxxxxx.supabase.co`)
-- **Chave anon public/publishable do Supabase** (a mesma usada no painel admin do app web)
-- **Código de ativação do terminal** (fornecido pelo PagBank para essa maquininha específica)
+Isso é seguro porque a chave usada é do tipo **anon public/publishable** — feita para ser exposta em apps clientes, protegida pelas regras de acesso das tabelas (Row Level Security) no Supabase, não por sigilo.
+
+O único campo que ainda existe na tela de configurações (toque e segure a tela de espera por ~3 segundos) é o **código de ativação do terminal** (fornecido pelo PagBank para essa maquininha específica) e o **modo de teste** (veja `COMO-TESTAR-SEM-A-MAQUININHA.md`).
+
+**Se um dia precisar trocar de projeto Supabase**: edite as duas constantes `SUPABASE_URL_EMBUTIDO` e `SUPABASE_KEY_EMBUTIDA` no topo do `MainActivity.kt`, e recompile.
 
 ## 5. Como compilar
 
@@ -80,4 +82,6 @@ Este projeto passou por duas mudanças de arquitetura, registradas aqui para nã
 
 1. **Primeira versão**: WebView carregando o site do app web (`?maquininha=1`), com uma ponte JavaScript para o PlugPag. Funcionava, mas usava por engano a biblioteca do modelo SmartPOS (`plugpagservice.wrapper`) — que proíbe justamente esse tipo de app (WebView).
 2. **Segunda versão**: trocada para a biblioteca "clássica" Bluetooth (`br.com.uol.pagseguro:plugpag:3.0.0`), pensando em um terminal externo tipo Minizinha conectado a um tablet separado.
-3. **Versão atual (esta)**: como o terminal real é uma **maquininha Smart** (SmartPOS), voltamos para a biblioteca `plugpagservice.wrapper` (a correta para esse modelo) — mas desta vez **reescrevendo a tela de catálogo/pagamento como código nativo**, sem WebView nenhum, para respeitar a restrição da documentação oficial.
+3. **Versão atual**: como o terminal real é uma **maquininha Smart** (SmartPOS), voltamos para a biblioteca `plugpagservice.wrapper` (a correta para esse modelo) — mas desta vez **reescrevendo a tela de catálogo/pagamento como código nativo**, sem WebView nenhum, para respeitar a restrição da documentação oficial.
+
+✅ **Build confirmado funcionando** via GitHub Actions, compilando de primeira sem nenhum erro — nem na parte reaproveitada do PlugPag, nem na parte nova (telas nativas + `SupabaseApi.kt`). O `.apk` gerado está pronto para os testes no Terminal de Desenvolvimento (DEBUG), conforme `COMO-INSTALAR-NA-MAQUININHA-SMART.md`.
