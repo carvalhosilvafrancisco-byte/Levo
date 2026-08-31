@@ -1,0 +1,38 @@
+name: Compilar APK da Maquininha
+
+# Roda automaticamente a cada atualização enviada para o repositório,
+# e também pode ser rodado manualmente pelo botão "Run workflow" na aba Actions.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar o Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Configurar o Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+
+      - name: Compilar o APK (versão de teste/debug)
+        run: gradle assembleDebug
+
+      - name: Disponibilizar o APK para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: levo-maquininha-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
