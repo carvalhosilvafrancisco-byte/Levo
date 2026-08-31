@@ -38,8 +38,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
 
     // SDK PlugPag (PagBank) — biblioteca para conectar com o terminal físico.
-    // A versão abaixo é a mais recente pública conhecida no momento em que este
-    // projeto foi criado; confirme com o time de integração do PagBank se há
-    // uma versão mais nova antes de compilar de verdade.
+    // Versão confirmada na documentação oficial (pagseguro.github.io/pagseguro-sdk-plugpagservicewrapper).
+    // Se o PagBank divulgar uma versão mais nova, troque o número abaixo.
     implementation 'br.com.uol.pagseguro.plugpagservice.wrapper:wrapper:1.30.51'
 }
