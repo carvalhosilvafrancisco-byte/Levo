@@ -41,5 +41,5 @@ dependencies {
     // A versão abaixo é a mais recente pública conhecida no momento em que este
     // projeto foi criado; confirme com o time de integração do PagBank se há
     // uma versão mais nova antes de compilar de verdade.
-    implementation 'br.com.uol.pagseguro.plugpagservice.wrapper:wrapper:1.30.52'
+    implementation 'br.com.uol.pagseguro.plugpagservice.wrapper:wrapper:1.30.51'
 }
