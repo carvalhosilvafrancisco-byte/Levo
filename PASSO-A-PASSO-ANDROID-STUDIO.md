@@ -1,6 +1,8 @@
 # Passo a passo: compilando o app da maquininha no Android Studio
 
-Este guia é só sobre a parte "mecânica" — instalar o programa, abrir o projeto, compilar e colocar no aparelho. Para as partes específicas do PagBank/PlugPag (código de ativação, tipos de terminal), veja o `README-PLUGPAG.md` na mesma pasta.
+Este guia é só sobre a parte "mecânica" — instalar o programa, abrir o projeto e compilar (Partes 1 a 3). Para as partes específicas do PagBank/PlugPag (código de ativação, tipos de terminal), veja o `README-PLUGPAG.md` na mesma pasta.
+
+> **Sem tablet**: este app roda direto na maquininha Smart, sem nenhum aparelho intermediário. As Partes 4 e 5 abaixo (testar/gerar o `.apk` num aparelho Android conectado) descrevem o processo genérico do Android Studio — na maquininha Smart, esse "aparelho conectado" é o **Terminal de Desenvolvimento (DEBUG)** fornecido pelo PagBank, não um tablet comum. Para o processo real completo (como conseguir esse terminal, instalar nele, e depois levar para produção), veja `COMO-INSTALAR-NA-MAQUININHA-SMART.md`.
 
 Não é preciso saber programar para seguir isso — é um passo a passo de cliques. Onde for preciso mexer em código, eu aviso exatamente qual linha trocar.
 

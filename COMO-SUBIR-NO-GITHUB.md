@@ -1,6 +1,8 @@
 # Como subir os arquivos certos no GitHub e compilar o app
 
-Este guia parte do zero absoluto: criar conta, criar repositório, colocar os arquivos certos, rodar a compilação, baixar e instalar o app no tablet. Vou explicar cada termo técnico e cada clique, sem pular etapas.
+Este guia parte do zero absoluto: criar conta, criar repositório, colocar os arquivos certos, e rodar a compilação (Partes 1 a 4). Vou explicar cada termo técnico e cada clique, sem pular etapas.
+
+> **Sem tablet**: este app roda direto na maquininha Smart — não existe um tablet separado no meio do caminho. A **Parte 5** abaixo (instalar o `.apk` tocando no arquivo) é só um exemplo genérico de como instalar um APK Android; ela **não funciona na maquininha Smart de verdade** (ela bloqueia esse tipo de instalação livre). Para instalar de fato na Smart, pule a Parte 5 e vá direto para `COMO-INSTALAR-NA-MAQUININHA-SMART.md`.
 
 ---
 
@@ -163,7 +165,9 @@ Para cada um dos 7 arquivos, dentro da página do repositório no GitHub:
 
 ---
 
-## Parte 5 — Instalar o APK no tablet/terminal
+## Parte 5 — Instalar o APK num Android genérico (⚠️ NÃO é o caminho para a maquininha Smart)
+
+> Esta seção mostra como instalar um `.apk` num celular/tablet Android comum, tocando no arquivo. É só uma referência genérica — **a maquininha Smart bloqueia esse tipo de instalação livre**. Se seu objetivo é instalar na Smart de verdade, pule esta parte e siga `COMO-INSTALAR-NA-MAQUININHA-SMART.md` (que usa ADB por cabo, num Terminal de Desenvolvimento fornecido pelo PagBank).
 
 1. Transfira o arquivo `app-debug.apk` para o tablet — pelo jeito que for mais fácil pra você: enviar por e-mail para você mesmo e abrir no tablet, subir no Google Drive e baixar de lá pelo tablet, ou por cabo USB.
 2. No tablet, toque no arquivo `.apk` baixado (geralmente aparece na pasta "Downloads").

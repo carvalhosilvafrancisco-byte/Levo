@@ -1,18 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Internet: para carregar o app web (index.html) e falar com o Supabase -->
+    <!-- Internet: para falar com o Supabase (produtos, estoque, vendas) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Necessárias quando o terminal se conecta por Bluetooth a um tablet separado
-         (modelo "terminal externo"). Se o app rodar embarcado dentro da própria
-         Moderninha Smart, essas permissões não fazem efeito, mas não atrapalham. -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="false"

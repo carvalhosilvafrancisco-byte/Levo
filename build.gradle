@@ -15,7 +15,8 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // Repositório oficial do SDK PlugPag (PagBank) — necessário para baixar a lib.
+        // Repositório oficial do SDK PlugPagServiceWrapper — modelo SmartPOS
+        // (app instalado embarcado dentro da própria maquininha, ex: Moderninha Smart).
         maven { url 'https://github.com/pagseguro/PlugPagServiceWrapper/raw/master' }
     }
 }
