@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.LevoMaquininha" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorBackground">#0B1E2D</item>
+    </style>
+</resources>
