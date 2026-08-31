@@ -12,7 +12,6 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
-import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagAppIdentification
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagActivationData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
 
@@ -29,10 +28,12 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
  *    função JavaScript na página para dar baixa no estoque (ou avisar erro).
  *
  * IMPORTANTE: os nomes exatos de classes/métodos do PlugPag podem mudar entre
- * versões do SDK. Este código foi escrito com base na documentação pública
- * mais recente disponível — confira com o suporte de integração do PagBank
- * (developer.pagbank.com.br) antes de compilar para produção, e ajuste se a
- * versão do SDK que você recebeu tiver assinaturas diferentes.
+ * versões do SDK. As assinaturas usadas aqui (ex: `PlugPag(context)` com um
+ * único argumento, e os resultados retornando `.result`/`.message`) foram
+ * ajustadas com base nos erros reais do compilador Kotlin ao compilar contra
+ * a versão 1.30.51 do wrapper — se você trocar de versão do SDK e o build
+ * voltar a falhar, o próprio erro do Kotlin costuma indicar exatamente qual
+ * assinatura mudou.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -63,7 +64,8 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        plugPag = PlugPag(this, PlugPagAppIdentification("LevoConveniencia", "1.0"))
+        // A versão do SDK usada aqui espera só o Context no construtor do PlugPag.
+        plugPag = PlugPag(this)
 
         val urlSalva = prefs.getString("url_app", null) ?: URL_PADRAO_APP
         webView.loadUrl(urlSalva)
@@ -81,9 +83,9 @@ class MainActivity : AppCompatActivity() {
         Thread {
             try {
                 val resultado = plugPag.initializeAndActivatePinpad(PlugPagActivationData(codigoAtivacao))
-                if (resultado != PlugPag.RET_OK) {
+                if (resultado.result != PlugPag.RET_OK) {
                     runOnUiThread {
-                        Toast.makeText(this, "Não foi possível ativar o terminal (código $resultado).", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Não foi possível ativar o terminal (código ${resultado.result}).", Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
@@ -139,7 +141,7 @@ class MainActivity : AppCompatActivity() {
                             "window.confirmarPagamentoNativoSucesso('${jsEscape(produtoId)}', $quantidade)", null
                         )
                     } else {
-                        val motivo = resultado.errorMessage ?: resultado.message ?: "Transação não aprovada"
+                        val motivo = resultado.message ?: "Transação não aprovada"
                         webView.evaluateJavascript(
                             "window.confirmarPagamentoNativoFalha('${jsEscape(produtoId)}', '${jsEscape(motivo)}')", null
                         )
